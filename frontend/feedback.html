@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback</title>
+    <link rel="stylesheet" href="assets/styles.css">
+    <link rel="stylesheet" href="assets/forms.css">
+    <style>
+        .feedback-options {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        .feedback-options label {
+            display: block;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Peccato!</h1>
+        <p>Ci aiuti a capire perché questo immobile non fa per te? Seleziona i motivi principali.</p>
+
+        <form id="feedback-form">
+            <div class="feedback-options">
+                <label><input type="checkbox" name="reason" value="budget"> Il prezzo è fuori budget</label>
+                <label><input type="checkbox" name="reason" value="zona"> La zona non mi convince</label>
+                <label><input type="checkbox" name="reason" value="piano"> Il piano è troppo alto/basso</label>
+                <label><input type="checkbox" name="reason" value="lavori"> Troppi lavori da fare</label>
+                <label><input type="checkbox" name="reason" value="planimetria"> La disposizione non mi piace</label>
+                <label><input type="checkbox" name="reason" value="altro"> Altro</label>
+            </div>
+            <button type="submit">Invia Feedback e Vedi Alternative</button>
+        </form>
+
+        <div id="alternatives" style="display:none; text-align: left; margin-top: 30px;">
+            <h2>Forse potrebbero interessarti:</h2>
+            <ul id="alternatives-list"></ul>
+            <p>Nessuna di queste ti convince? <a href="https://www.artediabitare.it/" target="_blank">Visita il nostro sito ufficiale</a>.</p>
+        </div>
+    </div>
+    <script src="js/feedback.js"></script>
+</body>
+</html>

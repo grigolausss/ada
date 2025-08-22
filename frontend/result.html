@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decisione Finale</title>
+    <link rel="stylesheet" href="assets/styles.css">
+    <link rel="stylesheet" href="assets/forms.css">
+    <style>
+        .decision-buttons {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .btn-primary {
+            background-color: #2c5282;
+        }
+        .btn-secondary {
+            background-color: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cosa ne pensi?</h1>
+        <p>Ora che hai visto tutti i dettagli, facci sapere la tua decisione.</p>
+        <div class="decision-buttons">
+            <button id="book-visit-btn" class="btn-primary">✅ Voglio visitarla</button>
+            <button id="no-thanks-btn" class="btn-secondary">❌ Non fa per me</button>
+        </div>
+    </div>
+    <script src="js/result.js"></script>
+</body>
+</html>

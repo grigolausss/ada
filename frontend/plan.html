@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planimetria Riservata</title>
+    <link rel="stylesheet" href="assets/styles.css">
+    <style>
+        #viewer-container {
+            position: relative;
+            width: 100%;
+            height: 80vh;
+            background-color: #000;
+        }
+        #openseadragon-viewer {
+            width: 100%;
+            height: 100%;
+        }
+        #watermark-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 100px;
+            opacity: 0.15;
+        }
+        .watermark-text {
+            color: #fff;
+            font-size: 16px;
+            transform: rotate(-30deg);
+            white-space: pre;
+        }
+        #confirmation-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #confirmation-box {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            text-align: center;
+        }
+        @media print {
+            body * {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div id="confirmation-modal">
+        <div id="confirmation-box">
+            <h1>Visuale Privata</h1>
+            <p>Stai per accedere a un'area riservata. È vietato salvare o condividere le planimetrie. Ogni accesso è personale e tracciato.</p>
+            <button id="confirm-btn">Accetto e Continuo</button>
+        </div>
+    </div>
+
+    <div class="container" id="main-content" style="display:none;">
+        <div id="viewer-container">
+            <div id="openseadragon-viewer"></div>
+            <div id="watermark-overlay"></div>
+        </div>
+        <div class="decision-bar" style="padding: 20px; text-align: center;">
+            <p>Hai visto abbastanza? Procedi al passo successivo.</p>
+            <button id="decision-btn">Ho deciso &rarr;</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/openseadragon@3.1.0/build/openseadragon/openseadragon.min.js"></script>
+    <script src="js/plan.js"></script>
+</body>
+</html>
