@@ -5,29 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Esito Qualificazione</title>
     <link rel="stylesheet" href="assets/styles.css">
+    <link rel="stylesheet" href="assets/forms.css">
 </head>
 <body>
     <div class="container" id="loading-container">
         <h1>Stiamo calcolando il tuo risultato...</h1>
     </div>
-
     <div class="container" id="result-container" style="display: none;">
-        <div id="visit-stage">
+        <div id="visit-stage" style="display: none;">
             <h1>Ottimo!</h1>
             <p>Il tuo profilo è compatibile con l'immobile. Prenota subito una visita.</p>
             <button id="book-visit-btn">🗓️ Prenota la tua visita</button>
-            <br>
-            <a href="/feedback.html" id="no-thanks-link-visit">Non mi interessa comunque</a>
+            <br><a href="/feedback.html">Non mi interessa comunque</a>
         </div>
         <div id="call-stage" style="display: none;">
             <h1>Ci siamo quasi!</h1>
-            <p>Vorremmo discutere alcuni dettagli con te. Un nostro consulente ti contatterà al più presto per una breve chiamata conoscitiva.</p>
-             <a href="/feedback.html" id="no-thanks-link-call">Preferisco non essere contattato</a>
+            <p>Un nostro consulente ti contatterà al più presto per una breve chiamata conoscitiva.</p>
+             <a href="/feedback.html">Preferisco non essere contattato</a>
         </div>
         <div id="nurture-stage" style="display: none;">
             <h1>Grazie per il tuo interesse.</h1>
-            <p>Al momento, questo immobile potrebbe non essere la soluzione ideale. Vediamo se ci sono alternative migliori per te.</p>
-            <a href="/feedback.html" id="see-alternatives-btn">Mostrami alternative</a>
+            <p>Questo immobile potrebbe non essere la soluzione ideale. Vediamo se ci sono alternative.</p>
+            <a href="/feedback.html">Mostrami alternative</a>
         </div>
     </div>
     <script src="js/result.js"></script>

@@ -4,46 +4,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const alternativesList = document.getElementById('alternatives-list');
 
     const api = {
-        saveFeedback: (reasons) => fetch('/api/feedback', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reasons })
-        }).then(res => res.json()),
-        getProperties: () => fetch('/api/properties').then(res => res.json()), // This should be a filtered endpoint
+        saveFeedback: (reasons) => fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reasons }) }),
+        getProperties: () => fetch('/api/properties') // This should be a public, non-protected endpoint
     };
 
     const displayAlternatives = async () => {
         try {
-            const allProperties = await api.getProperties();
+            const res = await api.getProperties();
+            const allProperties = await res.json();
             const currentRef = sessionStorage.getItem('propertyRef');
             const alternativeProps = allProperties.filter(p => p.ref !== currentRef);
 
             if (alternativeProps.length > 0) {
-                alternativesList.innerHTML = alternativeProps.slice(0, 3)
-                    .map(p => `<li>${p.titolo} (Ref: ${p.ref})</li>`).join('');
+                alternativesList.innerHTML = alternativeProps.slice(0, 3).map(p => `<li>${p.titolo} (Ref: ${p.ref})</li>`).join('');
             } else {
-                alternativesList.innerHTML = '<li>Nessuna alternativa trovata al momento.</li>';
+                alternativesList.innerHTML = '<li>Nessuna alternativa trovata.</li>';
             }
             alternativesContainer.style.display = 'block';
-        } catch (err) {
-            console.error('Failed to display alternatives:', err);
-        }
+        } catch (err) { console.error('Failed to display alternatives:', err); }
     };
 
     feedbackForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const selectedReasons = Array.from(feedbackForm.querySelectorAll('input[name="reason"]:checked')).map(el => el.value);
-        if (selectedReasons.length === 0) {
-            alert('Seleziona almeno un motivo.');
-            return;
-        }
+        if (selectedReasons.length === 0) return alert('Seleziona almeno un motivo.');
 
         try {
             await api.saveFeedback(selectedReasons);
             feedbackForm.style.display = 'none';
-            document.querySelector('.container > h1').textContent = "Grazie per il tuo feedback!";
+            document.querySelector('.container > h1').textContent = "Grazie!";
             await displayAlternatives();
-        } catch (err) {
-            alert('Errore nel salvataggio del feedback.');
-        }
+        } catch (err) { alert('Errore nel salvataggio del feedback.'); }
     });
 });

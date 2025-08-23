@@ -1,10 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- STATE ---
-    let state = {
-        sessionId: null, // This will be captured after starting the session
-    };
+    let state = { sessionId: null };
 
-    // --- DOM ELEMENTS ---
     const startStep = document.getElementById('start-step');
     const otpStep = document.getElementById('otp-step');
     const startForm = document.getElementById('start-form');
@@ -18,17 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const displayEmail = document.getElementById('display-email');
     const errorMsg = document.getElementById('error-message');
 
-    // --- API HELPERS ---
     const api = {
-        startSession: (data) => fetch('/api/session/start', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
-        }).then(res => res.json()),
-        verifyOtp: (sessionId, code) => fetch('/api/otp/verify', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId, code })
-        }).then(res => res.json()),
+        startSession: (data) => fetch('/api/session/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(res => res.json()),
+        verifyOtp: (sessionId, code) => fetch('/api/otp/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId, code }) }).then(res => res.json()),
     };
 
-    // --- UI LOGIC ---
     const showOtpStep = (email) => {
         startStep.style.display = 'none';
         otpStep.style.display = 'block';
@@ -40,55 +30,34 @@ document.addEventListener('DOMContentLoaded', () => {
         errorMsg.style.display = 'block';
     };
 
-    // --- EVENT HANDLERS ---
-    const handleStartSubmit = async (e) => {
+    startForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         showError('');
-        const data = {
-            nome: nameInput.value, cognome: surnameInput.value, email: emailInput.value,
-            phone: phoneInput.value, ref: refInput.value
-        };
-
+        const data = { nome: nameInput.value, cognome: surnameInput.value, email: emailInput.value, phone: phoneInput.value, ref: refInput.value };
         try {
             const result = await api.startSession(data);
             if (result.sessionId) {
                 state.sessionId = result.sessionId;
+                sessionStorage.setItem('propertyRef', data.ref); // Store ref for later
                 showOtpStep(data.email);
             } else {
                 showError(result.message || 'Si è verificato un errore.');
             }
-        } catch (err) {
-            showError('Errore di comunicazione con il server.');
-        }
-    };
+        } catch (err) { showError('Errore di comunicazione con il server.'); }
+    });
 
-    const handleOtpSubmit = async (e) => {
+    otpForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         showError('');
         const code = otpInput.value;
-        if (!code || code.length !== 6) {
-            return showError('Il codice OTP deve essere di 6 cifre.');
-        }
-
+        if (!code || code.length !== 6) return showError('Il codice OTP deve essere di 6 cifre.');
         try {
             const result = await api.verifyOtp(state.sessionId, code);
             if (result.success) {
-                // The cookie is set by the server. We can now move on.
                 window.location.href = '/privacy.html';
             } else {
                 showError(result.message || 'Codice non valido o sessione scaduta.');
             }
-        } catch (err) {
-            showError('Errore di comunicazione con il server.');
-        }
-    };
-
-    // --- INITIALIZATION ---
-    const init = () => {
-        // The new flow starts with user input, not a token.
-        startForm.addEventListener('submit', handleStartSubmit);
-        otpForm.addEventListener('submit', handleOtpSubmit);
-    };
-
-    init();
+        } catch (err) { showError('Errore di comunicazione con il server.'); }
+    });
 });

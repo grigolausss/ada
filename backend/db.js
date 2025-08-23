@@ -3,15 +3,6 @@ const path = require('path');
 
 const dataDir = path.join(__dirname, 'data');
 
-// Helper to ensure the data directory exists
-const ensureDataDir = async () => {
-    try {
-        await fs.access(dataDir);
-    } catch (e) {
-        await fs.mkdir(dataDir);
-    }
-};
-
 const getFilePath = (fileName) => path.join(dataDir, `${fileName}.json`);
 
 const readData = async (fileName) => {
@@ -20,17 +11,13 @@ const readData = async (fileName) => {
         const data = await fs.readFile(filePath, 'utf8');
         return JSON.parse(data);
     } catch (error) {
-        // If the file doesn't exist, return an empty array
-        if (error.code === 'ENOENT') {
-            return [];
-        }
+        if (error.code === 'ENOENT') return [];
         throw error;
     }
 };
 
 const writeData = async (fileName, data) => {
-    const filePath = getFilePath(fileName);
-    await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
+    await fs.writeFile(getFilePath(fileName), JSON.stringify(data, null, 2), 'utf8');
 };
 
 const find = async (fileName, predicate) => {
@@ -60,18 +47,10 @@ const update = async (fileName, predicate, updateFn) => {
         }
         return item;
     });
-    await writeData(fileName, newData);
+    if (updatedItem) {
+        await writeData(fileName, newData);
+    }
     return updatedItem;
-}
-
-// Initialize data directory on startup
-ensureDataDir();
-
-module.exports = {
-    readData,
-    writeData,
-    find,
-    filter,
-    push,
-    update
 };
+
+module.exports = { readData, writeData, find, filter, push, update };

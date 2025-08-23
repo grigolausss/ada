@@ -6,23 +6,15 @@
     <link rel="stylesheet" href="../frontend/assets/styles.css">
     <link rel="stylesheet" href="../frontend/assets/forms.css">
     <style>
-        textarea {
-            width: 100%;
-            height: 300px;
-            font-family: monospace;
-        }
-        .result-box {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 4px;
-            display: none;
-        }
+        textarea { width: 100%; height: 300px; font-family: monospace; }
+        .result-box { margin-top: 20px; padding: 15px; border-radius: 4px; display: none; }
         .result-box.success { background-color: #c6f6d5; }
         .result-box.error { background-color: #fed7d7; }
     </style>
 </head>
 <body>
     <div class="container">
+        <a href="/staff-console/dashboard.html">&larr; Torna alla Dashboard</a>
         <h1>Importa Immobili da CSV</h1>
         <p>Incolla i dati dal tuo file CSV qui sotto. La prima riga deve essere l'header.</p>
         <form id="import-form">
