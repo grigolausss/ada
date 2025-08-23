@@ -1,116 +1,92 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- STATE ---
     let state = {
-        token: null,
-        sessionId: null,
-        phone: null,
+        sessionId: null, // This will be captured after starting the session
     };
 
     // --- DOM ELEMENTS ---
-    const phoneStep = document.getElementById('phone-step');
+    const startStep = document.getElementById('start-step');
     const otpStep = document.getElementById('otp-step');
-    const phoneForm = document.getElementById('phone-form');
+    const startForm = document.getElementById('start-form');
     const otpForm = document.getElementById('otp-form');
+    const nameInput = document.getElementById('name');
+    const surnameInput = document.getElementById('surname');
+    const emailInput = document.getElementById('email');
     const phoneInput = document.getElementById('phone');
+    const refInput = document.getElementById('ref');
     const otpInput = document.getElementById('otp');
-    const displayPhone = document.getElementById('display-phone');
-    const phoneError = document.getElementById('phone-error');
-    const otpError = document.getElementById('otp-error');
+    const displayEmail = document.getElementById('display-email');
+    const errorMsg = document.getElementById('error-message');
 
     // --- API HELPERS ---
-    const API_BASE_URL = '/api';
-
     const api = {
-        startSession: (phone, token) => {
-            return fetch(`${API_BASE_URL}/session/start`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone, token }),
-            }).then(res => res.json());
-        },
-        verifyOtp: (sessionId, otp) => {
-            return fetch(`${API_BASE_URL}/session/verify`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionId, otp }),
-            }).then(res => res.json());
-        }
+        startSession: (data) => fetch('/api/session/start', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+        }).then(res => res.json()),
+        verifyOtp: (sessionId, code) => fetch('/api/otp/verify', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId, code })
+        }).then(res => res.json()),
     };
 
     // --- UI LOGIC ---
-    const showOtpStep = () => {
-        phoneStep.style.display = 'none';
+    const showOtpStep = (email) => {
+        startStep.style.display = 'none';
         otpStep.style.display = 'block';
-        displayPhone.textContent = state.phone;
+        displayEmail.textContent = email;
         otpInput.focus();
     };
-
-    const showError = (el, message) => {
-        el.textContent = message;
+    const showError = (message) => {
+        errorMsg.textContent = message;
+        errorMsg.style.display = 'block';
     };
 
     // --- EVENT HANDLERS ---
-    const handlePhoneSubmit = async (e) => {
+    const handleStartSubmit = async (e) => {
         e.preventDefault();
-        showError(phoneError, '');
-        const phone = phoneInput.value.trim();
-        if (!phone) {
-            showError(phoneError, 'Il numero di telefono è obbligatorio.');
-            return;
-        }
-
-        state.phone = phone;
+        showError('');
+        const data = {
+            nome: nameInput.value, cognome: surnameInput.value, email: emailInput.value,
+            phone: phoneInput.value, ref: refInput.value
+        };
 
         try {
-            const data = await api.startSession(phone, state.token);
-            if (data.sessionId) {
-                state.sessionId = data.sessionId;
-                // Store session info for next pages
-                sessionStorage.setItem('sessionId', data.sessionId);
-                sessionStorage.setItem('token', state.token);
-                showOtpStep();
+            const result = await api.startSession(data);
+            if (result.sessionId) {
+                state.sessionId = result.sessionId;
+                showOtpStep(data.email);
             } else {
-                showError(phoneError, data.message || 'Si è verificato un errore.');
+                showError(result.message || 'Si è verificato un errore.');
             }
         } catch (err) {
-            showError(phoneError, 'Errore di comunicazione con il server.');
+            showError('Errore di comunicazione con il server.');
         }
     };
 
     const handleOtpSubmit = async (e) => {
         e.preventDefault();
-        showError(otpError, '');
-        const otp = otpInput.value.trim();
-        if (!otp || otp.length !== 6) {
-            showError(otpError, 'Il codice OTP deve essere di 6 cifre.');
-            return;
+        showError('');
+        const code = otpInput.value;
+        if (!code || code.length !== 6) {
+            return showError('Il codice OTP deve essere di 6 cifre.');
         }
 
         try {
-            const data = await api.verifyOtp(state.sessionId, otp);
-            if (data.success) {
-                // On success, move to the next step
-                window.location.href = '/select-property.html';
+            const result = await api.verifyOtp(state.sessionId, code);
+            if (result.success) {
+                // The cookie is set by the server. We can now move on.
+                window.location.href = '/privacy.html';
             } else {
-                showError(otpError, data.message || 'Codice non valido. Riprova.');
+                showError(result.message || 'Codice non valido o sessione scaduta.');
             }
         } catch (err) {
-            showError(otpError, 'Errore di comunicazione con il server.');
+            showError('Errore di comunicazione con il server.');
         }
     };
 
     // --- INITIALIZATION ---
     const init = () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get('t');
-
-        if (!token) {
-            document.querySelector('.container').innerHTML = '<h1>Accesso non valido</h1><p>Il link utilizzato non è corretto o è scaduto.</p>';
-            return;
-        }
-
-        state.token = token;
-        phoneForm.addEventListener('submit', handlePhoneSubmit);
+        // The new flow starts with user input, not a token.
+        startForm.addEventListener('submit', handleStartSubmit);
         otpForm.addEventListener('submit', handleOtpSubmit);
     };
 

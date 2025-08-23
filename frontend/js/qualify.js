@@ -1,10 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- STATE ---
     let state = {
-        sessionId: null,
-        propertyRef: null,
         answers: {},
-        answeredCount: 0,
     };
 
     // --- DOM ELEMENTS ---
@@ -14,81 +11,69 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- API HELPERS ---
     const api = {
-        saveAnswers: (sessionId, propertyRef, answers) => {
+        saveAnswer: (key, value) => {
             return fetch('/api/answers', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionId, propertyRef, answers }),
-            }).then(res => res.json());
+                body: JSON.stringify({ key, value }),
+            }).then(res => {
+                if (!res.ok) throw new Error('Failed to save answer');
+                return res.json();
+            });
         }
     };
 
     // --- UI LOGIC ---
     const updateButtonState = () => {
-        // The "necessita" question is optional, so we don't count it towards the total
         const requiredAnsweredCount = Object.keys(state.answers).filter(q => q !== 'necessita').length;
-        if (requiredAnsweredCount >= 4) {
-            unlockBtn.disabled = false;
-        } else {
-            unlockBtn.disabled = true;
-        }
+        unlockBtn.disabled = requiredAnsweredCount < 4;
     };
 
     // --- EVENT HANDLERS ---
-    const handleOptionClick = (e, question, isMultiple) => {
+    const handleOptionClick = async (e, question, isMultiple) => {
         const target = e.target;
         if (!target.classList.contains('option-btn')) return;
 
         const value = target.dataset.value;
-        const parent = target.parentElement;
+        let answerChanged = false;
 
         if (isMultiple) {
             target.classList.toggle('selected');
-            const selectedValues = Array.from(parent.querySelectorAll('.selected')).map(el => el.dataset.value);
+            const selectedValues = Array.from(target.parentElement.querySelectorAll('.selected')).map(el => el.dataset.value);
             state.answers[question] = selectedValues;
+            answerChanged = true; // Always save on multi-choice change
         } else {
-            // Deselect sibling
-            parent.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
-            target.classList.add('selected');
-            state.answers[question] = value;
+            if (!target.classList.contains('selected')) {
+                target.parentElement.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+                target.classList.add('selected');
+                state.answers[question] = value;
+                answerChanged = true;
+            }
         }
 
-        updateButtonState();
+        if (answerChanged) {
+            try {
+                await api.saveAnswer(question, state.answers[question]);
+                updateButtonState();
+            } catch (err) {
+                console.error('Error saving answer:', err);
+                // Optionally show an error to the user
+            }
+        }
     };
 
-    const handleFormSubmit = async (e) => {
+    const handleFormSubmit = (e) => {
         e.preventDefault();
-        try {
-            const result = await api.saveAnswers(state.sessionId, state.propertyRef, state.answers);
-            if (result.success) {
-                window.location.href = '/plan.html';
-            } else {
-                alert('Si è verificato un errore nel salvataggio delle risposte.');
-            }
-        } catch (err) {
-            console.error('Failed to save answers', err);
-            alert('Errore di comunicazione con il server.');
-        }
+        // All answers are saved step-by-step, so we just need to navigate
+        window.location.href = '/plan.html';
     };
 
     // --- INITIALIZATION ---
-    const init = () => {
-        state.sessionId = sessionStorage.getItem('sessionId');
-        state.propertyRef = sessionStorage.getItem('propertyRef');
+    questionGroups.forEach(group => {
+        const question = group.dataset.question;
+        const isMultiple = group.dataset.multiple === 'true';
+        group.addEventListener('click', (e) => handleOptionClick(e, question, isMultiple));
+    });
 
-        if (!state.sessionId || !state.propertyRef) {
-            window.location.href = '/index.html'; // Redirect if no session/property
-            return;
-        }
-
-        questionGroups.forEach(group => {
-            const question = group.dataset.question;
-            const isMultiple = group.dataset.multiple === 'true';
-            group.addEventListener('click', (e) => handleOptionClick(e, question, isMultiple));
-        });
-
-        qualifyForm.addEventListener('submit', handleFormSubmit);
-    };
-
-    init();
+    qualifyForm.addEventListener('submit', handleFormSubmit);
 });

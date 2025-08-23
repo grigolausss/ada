@@ -3,34 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verifica Cliente</title>
+    <title>Piattaforma Filtro Clienti</title>
     <link rel="stylesheet" href="assets/styles.css">
     <link rel="stylesheet" href="assets/forms.css">
 </head>
 <body>
-
     <div class="container">
-        <div id="phone-step">
+        <div id="start-step">
             <h1>Accesso Riservato</h1>
-            <p>Per iniziare, inserisci il tuo numero di telefono. Ti invieremo un codice di verifica via SMS.</p>
-            <form id="phone-form">
-                <input type="tel" id="phone" placeholder="Il tuo numero di telefono" required>
-                <button type="submit">Invia Codice</button>
+            <p>Inserisci i tuoi dati e il riferimento dell'immobile per iniziare.</p>
+            <form id="start-form">
+                <input type="text" id="name" placeholder="Nome" required>
+                <input type="text" id="surname" placeholder="Cognome" required>
+                <input type="email" id="email" placeholder="La tua email" required>
+                <input type="tel" id="phone" placeholder="Il tuo telefono" required>
+                <input type="text" id="ref" placeholder="Riferimento Immobile (es. R806)" required>
+                <button type="submit">Richiedi Accesso</button>
             </form>
-            <p class="error-message" id="phone-error"></p>
         </div>
 
         <div id="otp-step" style="display: none;">
-            <h1>Verifica il tuo numero</h1>
-            <p>Abbiamo inviato un codice a 6 cifre al numero <span id="display-phone"></span>. Inseriscilo qui sotto.</p>
+            <h1>Verifica la tua identità</h1>
+            <p>Abbiamo inviato un codice a 6 cifre all'indirizzo <strong id="display-email"></strong>. Inseriscilo qui sotto.</p>
             <form id="otp-form">
                 <input type="text" id="otp" placeholder="Codice a 6 cifre" required maxlength="6">
-                <button type="submit">Verifica</button>
+                <button type="submit">Verifica e Continua</button>
             </form>
-            <p class="error-message" id="otp-error"></p>
         </div>
+        <p class="error-message" id="error-message" style="display: none;"></p>
     </div>
-
     <script src="js/app.js"></script>
 </body>
 </html>

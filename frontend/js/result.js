@@ -1,40 +1,35 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // --- STATE ---
-    let state = {
-        sessionId: null,
-        propertyRef: null,
-    };
-
-    // --- DOM ELEMENTS ---
+document.addEventListener('DOMContentLoaded', async () => {
+    const loadingContainer = document.getElementById('loading-container');
+    const resultContainer = document.getElementById('result-container');
+    const visitStage = document.getElementById('visit-stage');
+    const callStage = document.getElementById('call-stage');
+    const nurtureStage = document.getElementById('nurture-stage');
     const bookVisitBtn = document.getElementById('book-visit-btn');
-    const noThanksBtn = document.getElementById('no-thanks-btn');
 
-    // --- EVENT HANDLERS ---
-    const handleBookVisit = () => {
-        // In a real app, this might involve another API call to register the intent.
-        // For MVP, we redirect directly to the calendar.
-        // The calendar URL should have context about the user/property if possible.
-        alert('Stai per essere reindirizzato al calendario per prenotare la tua visita.');
-        window.location.href = 'https://cal.com/larte-di-abitare'; // Placeholder URL
+    const api = {
+        getScore: () => fetch('/api/score', { method: 'POST' }).then(res => res.json())
     };
 
-    const handleNoThanks = () => {
-        window.location.href = '/feedback.html';
-    };
+    try {
+        const result = await api.getScore();
+        loadingContainer.style.display = 'none';
+        resultContainer.style.display = 'block';
 
-    // --- INITIALIZATION ---
-    const init = () => {
-        state.sessionId = sessionStorage.getItem('sessionId');
-        state.propertyRef = sessionStorage.getItem('propertyRef');
-
-        if (!state.sessionId || !state.propertyRef) {
-            window.location.href = '/index.html';
-            return;
+        if (result.stage === 'visit') {
+            visitStage.style.display = 'block';
+        } else if (result.stage === 'call') {
+            callStage.style.display = 'block';
+        } else {
+            nurtureStage.style.display = 'block';
         }
 
-        bookVisitBtn.addEventListener('click', handleBookVisit);
-        noThanksBtn.addEventListener('click', handleNoThanks);
-    };
+    } catch (e) {
+        loadingContainer.innerHTML = '<h1>Errore</h1><p>Impossibile calcolare il risultato. Riprova più tardi.</p>';
+    }
 
-    init();
+    bookVisitBtn.addEventListener('click', () => {
+        // In a real app, you would fetch lead/property info to populate the link
+        const ref = sessionStorage.getItem('propertyRef') || 'UNKNOWN';
+        window.location.href = `https://cal.com/larte-di-abitare?ref=${ref}`;
+    });
 });

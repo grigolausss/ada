@@ -1,0 +1,8 @@
+[
+    {
+        "id": "user_1",
+        "email": "admin@ada.it",
+        "password_hash": "a5b3353549ae59ed5a8497635952f4a1e455255475632f14371901d14197d1b3",
+        "role": "admin"
+    }
+]

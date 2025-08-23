@@ -1,0 +1,22 @@
+[
+  {
+    "id": "sess_7c271768-ac75-41ca-a06f-40e78aebb63e",
+    "lead_id": "lead_30d03981-3e0d-4a96-832f-ac6869cf1439",
+    "property_ref": "R806",
+    "created_at": "2025-08-23T08:28:19.379Z",
+    "verified": false,
+    "otp_hash": "ad2cf8a26c476a3396694ba4129bd3c56c9b59bf2df62eebd51599340fc2195b",
+    "otp_expires": 1755938299380,
+    "otp_attempts": 0
+  },
+  {
+    "id": "sess_a9893a01-97d1-4561-b638-d59559ee207b",
+    "lead_id": "lead_30d03981-3e0d-4a96-832f-ac6869cf1439",
+    "property_ref": "R806",
+    "created_at": "2025-08-23T08:29:09.145Z",
+    "verified": false,
+    "otp_hash": "f541e1bc86e06454c03c755390f3af836ea6939a800e6ec7391f1dfeb9306bca",
+    "otp_expires": 1755938349145,
+    "otp_attempts": 0
+  }
+]

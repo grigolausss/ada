@@ -1,118 +1,94 @@
-console.log('plan.js script executing...');
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM fully loaded and parsed.');
-    // --- STATE ---
-    let state = {
-        sessionId: null,
-        propertyRef: null,
-    };
-
-    // --- DOM ELEMENTS ---
     const confirmationModal = document.getElementById('confirmation-modal');
     const confirmBtn = document.getElementById('confirm-btn');
     const mainContent = document.getElementById('main-content');
-    const viewerContainer = document.getElementById('viewer-container');
-    const watermarkOverlay = document.getElementById('watermark-overlay');
     const decisionBtn = document.getElementById('decision-btn');
+    const canvas = document.getElementById('plan-canvas');
+    const ctx = canvas.getContext('2d');
 
-    // --- API HELPERS ---
+    let viewStartTime;
+
     const api = {
-        getSessionDetails: (sessionId) => fetch(`/api/session/details/${sessionId}`).then(res => res.json()),
-        getProperty: (ref) => fetch(`/api/properties/${ref}`).then(res => res.json()),
-        logPlanView: (sessionId, propertyRef) => {
-            return fetch('/api/plan-views', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionId, propertyRef }),
-            });
-        }
+        getPlanData: () => fetch(`/api/property/${sessionStorage.getItem('propertyRef')}/plan`),
+        getMe: () => fetch('/api/me'),
+        logDuration: (duration) => fetch('/api/plan-view-duration', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ duration })
+        })
     };
 
-    // --- LOGIC ---
-    const generateWatermark = (text) => {
-        // Create a grid of watermark text
-        for (let i = 0; i < 30; i++) {
-            const span = document.createElement('span');
-            span.className = 'watermark-text';
-            span.textContent = text;
-            watermarkOverlay.appendChild(span);
+    const drawWatermark = (data) => {
+        const { nome, cognome, email } = data.lead;
+        const ref = sessionStorage.getItem('propertyRef');
+        const timestamp = new Date().toLocaleString('it-IT');
+        const text = `${nome} ${cognome} · ${email} · ${ref} · ${timestamp}`;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        ctx.font = '16px Arial';
+        ctx.rotate(-20 * Math.PI / 180);
+
+        for (let y = -100; y < canvas.height * 1.5; y += 100) {
+            for (let x = -100; x < canvas.width * 1.5; x += 300) {
+                ctx.fillText(text, x, y);
+            }
         }
+        ctx.rotate(20 * Math.PI / 180); // Reset rotation
     };
 
-    const initializeViewer = async () => {
-        console.log('Initializing viewer...');
+    const initializeCanvas = async () => {
         try {
-            // 1. Log the view event
-            await api.logPlanView(state.sessionId, state.propertyRef);
-            console.log('Plan view logged.');
+            const [planRes, meRes] = await Promise.all([api.getPlanData(), api.getMe()]);
+            if (!planRes.ok || !meRes.ok) throw new Error('Failed to load initial data');
 
-            // 2. Fetch data for watermark and plan
-            const [sessionDetails, propertyDetails] = await Promise.all([
-                api.getSessionDetails(state.sessionId),
-                api.getProperty(state.propertyRef)
-            ]);
-            console.log('API responses received:', { sessionDetails, propertyDetails });
+            const planData = await planRes.json();
+            const leadData = await meRes.json();
 
-            if (!sessionDetails.phone || sessionDetails.phone === 'N/A' || !propertyDetails.url_planimetria) {
-                console.error('Validation failed:', { sessionDetails, propertyDetails });
-                throw new Error('Could not retrieve required data.');
-            }
-
-            // 3. Generate watermark
-            console.log('Generating watermark...');
-            const timestamp = new Date().toLocaleString('it-IT');
-            const watermarkText = `${sessionDetails.phone}\n${sessionDetails.ip}\n${timestamp}`;
-            generateWatermark(watermarkText);
-
-            // 4. Show the main content
-            mainContent.style.display = 'block';
-
-            // 5. Initialize OpenSeadragon (can fail gracefully)
-            try {
-                const viewer = OpenSeadragon({
-                    id: "openseadragon-viewer",
-                    prefixUrl: "https://cdn.jsdelivr.net/npm/openseadragon@3.1.0/build/openseadragon/images/",
-                    tileSources: {
-                        type: 'image',
-                        url: propertyDetails.url_planimetria
-                    },
-                    showNavigator: true,
-                    constrainDuringPan: true,
-                });
-            } catch (osdError) {
-                console.error("OpenSeadragon failed to initialize:", osdError);
-                document.getElementById('openseadragon-viewer').innerHTML = '<p style="color:red;">Anteprima planimetria non disponibile.</p>';
-            }
+            // Here we should verify planData.token, but for this MVP we'll just use the URL
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.src = planData.url;
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                drawWatermark({ lead: leadData });
+                viewStartTime = Date.now();
+                mainContent.style.display = 'block';
+            };
+            img.onerror = () => { throw new Error('Image could not be loaded.'); };
 
         } catch (err) {
-            console.error('Failed to fetch data for viewer:', err);
-            mainContent.innerHTML = '<p>Impossibile caricare i dati per la planimetria. Riprova più tardi.</p>';
+            console.error('Canvas initialization failed:', err);
+            mainContent.innerHTML = `<p>Impossibile caricare la planimetria. Causa: ${err.message}</p>`;
             mainContent.style.display = 'block';
         }
     };
 
-
-    // --- EVENT HANDLERS ---
-    const handleConfirm = () => {
+    confirmBtn.addEventListener('click', () => {
         confirmationModal.style.display = 'none';
-        initializeViewer();
-    };
+        initializeCanvas();
+    });
 
-    // --- INITIALIZATION ---
-    const init = () => {
-        state.sessionId = sessionStorage.getItem('sessionId');
-        state.propertyRef = sessionStorage.getItem('propertyRef');
-
-        if (!state.sessionId || !state.propertyRef) {
-            window.location.href = '/index.html';
-            return;
+    const logAndNavigate = () => {
+        if (viewStartTime) {
+            const duration = Math.round((Date.now() - viewStartTime) / 1000);
+            api.logDuration(duration); // Fire and forget
         }
-
-        confirmBtn.addEventListener('click', handleConfirm);
-        decisionBtn.addEventListener('click', () => {
-            window.location.href = '/result.html';
-        });
+        window.location.href = '/result.html';
     };
 
-    init();
+    decisionBtn.addEventListener('click', logAndNavigate);
+    // Also log duration if user navigates away
+    window.addEventListener('beforeunload', () => {
+        if (viewStartTime) {
+            const duration = Math.round((Date.now() - viewStartTime) / 1000);
+            navigator.sendBeacon('/api/plan-view-duration', JSON.stringify({ duration }));
+        }
+    });
+
+    // We no longer need a complex init, just check for the propertyRef in sessionStorage
+    if (!sessionStorage.getItem('propertyRef')) {
+       // In a real app, you'd check the cookie, but for this flow, we assume state
+       // window.location.href = '/';
+    }
 });
