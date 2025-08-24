@@ -8,7 +8,7 @@ const auth = require('./auth');
 
 const PORT = process.env.PORT || 3000;
 
-// Helper functions
+// --- Helper Functions ---
 const parseCookies = (cookieHeader = '') => cookieHeader.split(';').reduce((acc, cookie) => { if (!cookie.includes('=')) return acc; const [key, value] = cookie.trim().split('='); acc[key] = value; return acc; }, {});
 const sendResponse = (res, statusCode, contentType, data, headers = {}) => { res.writeHead(statusCode, { 'Content-Type': contentType, ...headers }); res.end(data); };
 const getBody = async (req) => { let body = ''; for await (const chunk of req) { body += chunk; } try { if (req.headers['content-type'] === 'application/json') return body ? JSON.parse(body) : {}; return body; } catch (e) { return null; } };
@@ -17,9 +17,10 @@ const serveStaticFile = (res, filePath, basePath) => {
     if (!resolvedPath.startsWith(basePath)) return sendResponse(res, 403, 'text/plain', 'Forbidden');
     const ext = path.extname(resolvedPath).toLowerCase();
     const mimeTypes = { '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript', '.png': 'image/png' };
-    fs.readFile(resolvedPath, (err, content) => { if (err) { sendResponse(res, 404, 'text/plain', `Not Found`); } else { sendResponse(res, 200, mimeTypes[ext] || 'application/octet-stream', content); } });
+    fs.readFile(resolvedPath, (err, content) => { if (err) { sendResponse(res, 404, 'text/plain', `Not Found: ${filePath}`); } else { sendResponse(res, 200, mimeTypes[ext] || 'application/octet-stream', content); } });
 };
 
+// --- Main Server Logic ---
 const server = http.createServer(async (req, res) => {
     const { method, url } = req;
     const { pathname } = new URL(url, `http://${req.headers.host}`);
@@ -42,6 +43,7 @@ const server = http.createServer(async (req, res) => {
             }
             if (method === 'POST' && pathname === '/api/otp/verify') {
                 const { sessionId, code } = body;
+                if (!sessionId || !code) return sendResponse(res, 400, 'application/json', JSON.stringify({ message: 'Payload incompleto.' }));
                 const session = await db.find('sessions', s => s.id === sessionId);
                 if (!session || session.verified || session.otp_attempts >= 5 || Date.now() > session.otp_expires) return sendResponse(res, 400, 'application/json', JSON.stringify({ message: 'Sessione non valida o OTP scaduto.' }));
                 if (auth.hashValue(code) !== session.otp_hash) {
@@ -53,11 +55,25 @@ const server = http.createServer(async (req, res) => {
                 const cookie = `session_token=${token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=1800`;
                 return sendResponse(res, 200, 'application/json', JSON.stringify({ success: true }), { 'Set-Cookie': cookie });
             }
-            // ... all other routes implemented correctly ...
+            return sendResponse(res, 404, 'application/json', JSON.stringify({ message: 'Endpoint API non trovato.' }));
+
+        } else {
+            const isStaffRoute = pathname.startsWith('/staff-console');
+            const basePath = isStaffRoute ? path.join(__dirname, '../staff-console') : path.join(__dirname, '../frontend');
+            let resourcePath = '';
+            if (isStaffRoute) {
+                resourcePath = pathname.substring(14) || 'login.html';
+            } else {
+                if (pathname === '/' || pathname.startsWith('/start')) {
+                    resourcePath = 'index.html';
+                } else {
+                    resourcePath = pathname.substring(1);
+                }
+            }
+            return serveStaticFile(res, resourcePath, basePath);
         }
-        // ... static serving ...
     } catch (error) {
-        console.error("Unhandled Error:", error);
+        console.error("Unhandled Server Error:", error);
         sendResponse(res, 500, 'text/plain', 'Internal Server Error');
     }
 });

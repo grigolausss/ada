@@ -1,1 +1,12 @@
-[]
+[
+    {
+        "id": "prop_1",
+        "ref": "R806",
+        "titolo": "Attico Panoramico in Centro",
+        "zona": "Centro",
+        "mq": 150,
+        "prezzo_range": "400-600k",
+        "plan_path": "plan-1.png",
+        "images": []
+    }
+]

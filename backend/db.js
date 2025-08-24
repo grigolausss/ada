@@ -11,7 +11,11 @@ const readData = async (fileName) => {
         const data = await fs.readFile(filePath, 'utf8');
         return JSON.parse(data);
     } catch (error) {
-        if (error.code === 'ENOENT') return [];
+        if (error.code === 'ENOENT') {
+            // If file doesn't exist, create it with an empty array
+            await writeData(fileName, []);
+            return [];
+        }
         throw error;
     }
 };
@@ -23,11 +27,6 @@ const writeData = async (fileName, data) => {
 const find = async (fileName, predicate) => {
     const data = await readData(fileName);
     return data.find(predicate);
-};
-
-const filter = async (fileName, predicate) => {
-    const data = await readData(fileName);
-    return data.filter(predicate);
 };
 
 const push = async (fileName, item) => {
@@ -53,4 +52,4 @@ const update = async (fileName, predicate, updateFn) => {
     return updatedItem;
 };
 
-module.exports = { readData, writeData, find, filter, push, update };
+module.exports = { readData, writeData, find, push, update };
